@@ -14,7 +14,23 @@ The Gemini vector collection is separate from the previous OpenAI collection, so
 ## Run the frontend
 
 1. Keep the backend running at `http://127.0.0.1:8000`.
-2. In a second terminal, run `pnpm dev` from the `frontend` directory.
+2. In a second terminal, run `npm run dev` from the `frontend` directory.
 3. Open `http://localhost:3000` and choose the customer portal or agent workspace.
 
 Set `NEXT_PUBLIC_API_URL` if the backend uses a different address. The default is `http://127.0.0.1:8000/api/v1`.
+
+## Send resolved replies by email
+
+Add these values to `backend/.env` and restart the backend:
+
+```env
+SMTP_ENABLED=true
+SMTP_HOST=smtp.your-provider.com
+SMTP_PORT=587
+SMTP_USERNAME=your-smtp-username
+SMTP_PASSWORD=your-smtp-password
+SMTP_FROM_EMAIL=support@your-domain.com
+SMTP_USE_TLS=true
+```
+
+After configuration, **Send & resolve** saves the reply, closes the ticket, and sends the reply to the customer. The agent workspace shows whether the delivery was sent, failed, or has not been configured.

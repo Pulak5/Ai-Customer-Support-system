@@ -1,6 +1,6 @@
 from sqlalchemy.orm import Session
 from app.db.models.ticket_model import Ticket
-from app.schemas.ticket_schema import TicketCreate
+from app.schemas.ticket_schema import TicketCreate, TicketReplyCreate
 
 # NEW IMPORT: Bring in our AI engine
 from app.ai.engine import triage_ticket_text
@@ -53,3 +53,25 @@ def get_all_tickets(db: Session, skip: int = 0, limit: int = 100):
 
 def get_ticket(db: Session, ticket_id: int) -> Ticket:
     return db.query(Ticket).filter(Ticket.id == ticket_id).first()
+
+def resolve_ticket(db: Session, ticket_id: int, reply_in: TicketReplyCreate) -> Ticket | None:
+    ticket = get_ticket(db=db, ticket_id=ticket_id)
+    if not ticket:
+        return None
+
+    ticket.agent_reply = reply_in.message.strip()
+    ticket.status = "resolved"
+    ticket.email_delivery_status = "pending"
+    db.commit()
+    db.refresh(ticket)
+
+    from app.services.email_service import send_resolution_email
+    delivery = send_resolution_email(
+        recipient=ticket.customer_email,
+        subject=ticket.subject,
+        reply=ticket.agent_reply,
+    )
+    ticket.email_delivery_status = delivery.status
+    db.commit()
+    db.refresh(ticket)
+    return ticket

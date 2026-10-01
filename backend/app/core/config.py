@@ -15,6 +15,15 @@ class Settings(BaseSettings):
     GEMINI_FALLBACK_CHAT_MODEL: str = "gemini-3.5-flash-lite"
     GEMINI_EMBEDDING_MODEL: str = "gemini-embedding-2-preview"
 
+    # Outbound SMTP email settings
+    SMTP_ENABLED: bool = False
+    SMTP_HOST: str = ""
+    SMTP_PORT: int = 587
+    SMTP_USERNAME: str = ""
+    SMTP_PASSWORD: str = ""
+    SMTP_FROM_EMAIL: str = ""
+    SMTP_USE_TLS: bool = True
+
     # This tells Pydantic to read from a .env file if it exists
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8")
 

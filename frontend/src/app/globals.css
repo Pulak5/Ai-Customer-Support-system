@@ -44,6 +44,10 @@ textarea { resize: vertical; }
 .ticket-description, .draft-copy { white-space: pre-wrap; line-height: 1.65; }
 .tag-list { display: flex; flex-wrap: wrap; gap: 8px; }
 .draft-panel { min-height: 180px; }
+.reply-input { margin-top: 16px; }
+.draft-actions { align-items: center; display: flex; gap: 16px; justify-content: space-between; margin-top: 12px; }
+.draft-actions .muted { margin: 0; }
+.saved-reply { border-top: 1px solid #e5e8f2; margin-top: 22px; padding-top: 18px; }
 .empty-state, .empty-workspace { color: #69758c; }
 .empty-workspace { min-height: 280px; display: grid; place-content: center; text-align: center; }
-@media (max-width: 760px) { .customer-grid, .workspace-grid { grid-template-columns: 1fr; } .top-nav { margin-bottom: 32px; } .workspace-header { align-items: flex-start; flex-direction: column; } }
+@media (max-width: 760px) { .customer-grid, .workspace-grid { grid-template-columns: 1fr; } .top-nav { margin-bottom: 32px; } .workspace-header, .draft-actions { align-items: flex-start; flex-direction: column; } }

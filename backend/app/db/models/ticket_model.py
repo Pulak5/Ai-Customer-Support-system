@@ -18,6 +18,8 @@ class Ticket(Base):
     priority = Column(String, nullable=True)     # e.g., low, high, urgent
     sentiment = Column(String, nullable=True)    # e.g., angry, neutral
     assigned_group = Column(String, nullable=True) # e.g., Billing Team, Tech Support
+    agent_reply = Column(Text, nullable=True)
+    email_delivery_status = Column(String, nullable=True)
     
     # Timestamps
     created_at = Column(DateTime(timezone=True), server_default=func.now())

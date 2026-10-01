@@ -9,6 +9,9 @@ class TicketCreate(BaseModel):
     subject: str
     description: str
 
+class TicketReplyCreate(BaseModel):
+    message: str
+
 # Schema for returning ticket data back to the frontend
 class TicketResponse(BaseModel):
     id: int
@@ -21,6 +24,8 @@ class TicketResponse(BaseModel):
     priority: Optional[str] = None
     sentiment: Optional[str] = None
     assigned_group: Optional[str] = None
+    agent_reply: Optional[str] = None
+    email_delivery_status: Optional[str] = None
     
     created_at: datetime
     updated_at: Optional[datetime] = None

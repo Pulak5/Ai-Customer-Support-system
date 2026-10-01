@@ -27,9 +27,16 @@ def migrate_sqlite_schema():
         return
 
     ticket_columns = {column["name"] for column in inspector.get_columns("tickets")}
-    if "assigned_group" not in ticket_columns:
+    missing_columns = {
+        "assigned_group": "VARCHAR",
+        "agent_reply": "TEXT",
+        "email_delivery_status": "VARCHAR",
+    }
+    for column_name, column_type in missing_columns.items():
+        if column_name in ticket_columns:
+            continue
         with engine.begin() as connection:
-            connection.execute(text("ALTER TABLE tickets ADD COLUMN assigned_group VARCHAR"))
+            connection.execute(text(f"ALTER TABLE tickets ADD COLUMN {column_name} {column_type}"))
 
 # Dependency function to use in our API routes to get a DB session
 def get_db():

@@ -4,7 +4,7 @@ from sqlalchemy.orm import Session
 from typing import List
 
 from app.db.database import get_db
-from app.schemas.ticket_schema import TicketCreate, TicketResponse
+from app.schemas.ticket_schema import TicketCreate, TicketReplyCreate, TicketResponse
 from app.services import ticket_service
 
 router = APIRouter()
@@ -39,6 +39,20 @@ def get_draft_reply(ticket_id: int, db: Session = Depends(get_db)):
     except GeminiUnavailableError as error:
         raise HTTPException(status_code=503, detail=str(error)) from error
     return {"draft_reply": draft}
+
+@router.post("/{ticket_id}/reply", response_model=TicketResponse)
+def send_agent_reply(
+    ticket_id: int,
+    reply: TicketReplyCreate,
+    db: Session = Depends(get_db),
+):
+    """Save an agent's response and mark the ticket as resolved."""
+    if not reply.message.strip():
+        raise HTTPException(status_code=422, detail="Reply message cannot be empty")
+    ticket = ticket_service.resolve_ticket(db=db, ticket_id=ticket_id, reply_in=reply)
+    if not ticket:
+        raise HTTPException(status_code=404, detail="Ticket not found")
+    return ticket
 
 @router.get("/{ticket_id}", response_model=TicketResponse)
 def view_ticket_status(

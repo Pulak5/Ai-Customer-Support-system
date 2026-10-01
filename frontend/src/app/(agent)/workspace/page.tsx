@@ -13,14 +13,15 @@ import type { Ticket } from "@/types";
 export default function AgentWorkspacePage() {
   const { tickets, loading, error, refresh } = useTickets();
   const [selected, setSelected] = useState<Ticket | null>(null);
-  const [draft, setDraft] = useState("");
+  const [reply, setReply] = useState("");
   const [draftError, setDraftError] = useState("");
   const [draftLoading, setDraftLoading] = useState(false);
+  const [sending, setSending] = useState(false);
   const orderedTickets = useMemo(() => sortTicketsByPriority(tickets), [tickets]);
 
   function selectTicket(ticket: Ticket) {
     setSelected(ticket);
-    setDraft("");
+    setReply(ticket.agent_reply ?? "");
     setDraftError("");
   }
 
@@ -30,11 +31,27 @@ export default function AgentWorkspacePage() {
     setDraftError("");
     try {
       const response = await api.getDraftReply(selected.id);
-      setDraft(response.draft_reply);
+      setReply(response.draft_reply);
     } catch (reason) {
       setDraftError(reason instanceof Error ? reason.message : "Could not generate a draft reply.");
     } finally {
       setDraftLoading(false);
+    }
+  }
+
+  async function sendReply() {
+    if (!selected || !reply.trim()) return;
+    setSending(true);
+    setDraftError("");
+    try {
+      const updatedTicket = await api.resolveTicket(selected.id, reply);
+      setSelected(updatedTicket);
+      setReply(updatedTicket.agent_reply ?? "");
+      await refresh();
+    } catch (reason) {
+      setDraftError(reason instanceof Error ? reason.message : "Could not send the reply.");
+    } finally {
+      setSending(false);
     }
   }
 
@@ -46,7 +63,7 @@ export default function AgentWorkspacePage() {
       <div className="workspace-grid">
         <aside className="queue-panel"><h2>Priority queue</h2>{loading ? <p className="muted">Loading tickets…</p> : <TicketList tickets={orderedTickets} selectedId={selected?.id} onSelect={selectTicket} />}</aside>
         <section className="workspace-content">
-          {selected ? <><TicketDetail ticket={selected} /><AiDraftViewer draft={draft} loading={draftLoading} error={draftError} onGenerate={() => void generateDraft()} /></> : <div className="empty-workspace"><h2>Select a ticket</h2><p>Choose a ticket in the queue to view its details and create an AI reply.</p></div>}
+          {selected ? <><TicketDetail ticket={selected} /><AiDraftViewer reply={reply} generating={draftLoading} sending={sending} error={draftError} onGenerate={() => void generateDraft()} onReplyChange={setReply} onSend={() => void sendReply()} /></> : <div className="empty-workspace"><h2>Select a ticket</h2><p>Choose a ticket in the queue to view its details and create an AI reply.</p></div>}
         </section>
       </div>
     </main>

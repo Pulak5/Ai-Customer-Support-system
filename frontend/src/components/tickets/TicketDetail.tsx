@@ -17,7 +17,9 @@ export function TicketDetail({ ticket }: { ticket: Ticket }) {
         <span>Priority: {ticket.priority ?? "Medium"}</span>
         <span>Sentiment: {ticket.sentiment ?? "Neutral"}</span>
         <span>Team: {ticket.assigned_group ?? "General Support"}</span>
+        <span>Email: {ticket.email_delivery_status?.replace("_", " ") ?? "not configured"}</span>
       </div>
+      {ticket.agent_reply && <div className="saved-reply"><p className="eyebrow">Saved agent reply</p><p className="draft-copy">{ticket.agent_reply}</p></div>}
     </section>
   );
 }

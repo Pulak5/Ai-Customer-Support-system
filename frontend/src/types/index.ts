@@ -8,6 +8,8 @@ export type Ticket = {
   priority: string | null;
   sentiment: string | null;
   assigned_group: string | null;
+  agent_reply: string | null;
+  email_delivery_status: string | null;
   created_at: string;
   updated_at: string | null;
 };

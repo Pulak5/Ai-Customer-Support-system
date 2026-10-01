@@ -70,7 +70,7 @@ export default function CustomerDashboardPage() {
             <Button type="submit" loading={tracking}>Check status</Button>
           </form>
           {error && <p className="form-error" role="alert">{error}</p>}
-          {ticket && <div className="result-card"><p className="eyebrow">Ticket #{ticket.id}</p><h3>{ticket.subject}</h3><p className="status-line">Status: <strong>{ticket.status.replace("_", " ")}</strong></p><p className="muted">Assigned to {ticket.assigned_group ?? "General Support"}</p></div>}
+          {ticket && <div className="result-card"><p className="eyebrow">Ticket #{ticket.id}</p><h3>{ticket.subject}</h3><p className="status-line">Status: <strong>{ticket.status.replace("_", " ")}</strong></p><p className="muted">Assigned to {ticket.assigned_group ?? "General Support"}</p>{ticket.agent_reply && <><p className="eyebrow">Support reply</p><p className="draft-copy">{ticket.agent_reply}</p></>}{ticket.email_delivery_status === "sent" && <p className="muted">A copy of this reply was sent by email.</p>}</div>}
         </section>
       </div>
     </main>
