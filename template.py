@@ -45,6 +45,7 @@ list_of_files = [
     "backend/app/ai/rag/vector_db.py",
     "backend/tests/__init__.py",
     "backend/requirements.txt",
+    "backend/setup.py",
     "backend/main.py",
     
     # Frontend files
