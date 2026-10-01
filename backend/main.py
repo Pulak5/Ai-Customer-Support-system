@@ -1,12 +1,13 @@
 from fastapi import FastAPI
 from app.core.config import settings
-from app.db.database import engine, Base
+from app.db.database import engine, Base, migrate_sqlite_schema
 from app.db.models import ticket_model
 
 # 1. NEW IMPORT
 from app.api.v1.routes import tickets
 
 Base.metadata.create_all(bind=engine)
+migrate_sqlite_schema()
 
 app = FastAPI(
     title=settings.PROJECT_NAME,

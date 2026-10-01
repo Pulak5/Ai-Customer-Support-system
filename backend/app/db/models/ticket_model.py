@@ -17,6 +17,7 @@ class Ticket(Base):
     category = Column(String, nullable=True)     # e.g., billing, technical
     priority = Column(String, nullable=True)     # e.g., low, high, urgent
     sentiment = Column(String, nullable=True)    # e.g., angry, neutral
+    assigned_group = Column(String, nullable=True) # e.g., Billing Team, Tech Support
     
     # Timestamps
     created_at = Column(DateTime(timezone=True), server_default=func.now())

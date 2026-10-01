@@ -20,6 +20,7 @@ class TicketResponse(BaseModel):
     category: Optional[str] = None
     priority: Optional[str] = None
     sentiment: Optional[str] = None
+    assigned_group: Optional[str] = None
     
     created_at: datetime
     updated_at: Optional[datetime] = None
