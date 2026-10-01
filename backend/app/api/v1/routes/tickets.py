@@ -1,5 +1,5 @@
 # TODO: Implement module logic
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 from typing import List
 
@@ -28,7 +28,6 @@ def get_draft_reply(ticket_id: int, db: Session = Depends(get_db)):
     """
     Endpoint for agents to get an AI-generated draft reply for a ticket.
     """
-    from fastapi import HTTPException
     from app.ai.engine import GeminiUnavailableError, generate_draft_reply
     
     ticket = ticket_service.get_ticket(db=db, ticket_id=ticket_id)
@@ -40,3 +39,15 @@ def get_draft_reply(ticket_id: int, db: Session = Depends(get_db)):
     except GeminiUnavailableError as error:
         raise HTTPException(status_code=503, detail=str(error)) from error
     return {"draft_reply": draft}
+
+@router.get("/{ticket_id}", response_model=TicketResponse)
+def view_ticket_status(
+    ticket_id: int,
+    customer_email: str = Query(...),
+    db: Session = Depends(get_db),
+):
+    """Return a customer's ticket when its ID and email address match."""
+    ticket = ticket_service.get_ticket(db=db, ticket_id=ticket_id)
+    if not ticket or ticket.customer_email.lower() != customer_email.lower():
+        raise HTTPException(status_code=404, detail="Ticket not found")
+    return ticket

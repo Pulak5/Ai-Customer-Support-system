@@ -217,3 +217,7 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+# Frontend build and package-manager files
+frontend/node_modules/
+frontend/.next/
+.pnpm-store/
