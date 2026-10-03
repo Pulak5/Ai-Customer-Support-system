@@ -4,21 +4,25 @@ type AiDraftViewerProps = {
   reply: string;
   generating: boolean;
   sending: boolean;
+  escalationRequired: boolean;
+  canExplicitlyResolve: boolean;
+  isResolved: boolean;
   error: string;
   onGenerate: () => void;
   onReplyChange: (reply: string) => void;
   onSend: () => void;
+  onResolve: () => void;
 };
 
-export function AiDraftViewer({ reply, generating, sending, error, onGenerate, onReplyChange, onSend }: AiDraftViewerProps) {
+export function AiDraftViewer({ reply, generating, sending, escalationRequired, canExplicitlyResolve, isResolved, error, onGenerate, onReplyChange, onSend, onResolve }: AiDraftViewerProps) {
   return (
     <section className="draft-panel">
       <div className="section-heading">
         <div>
-          <p className="eyebrow">Gemini assistant</p>
-          <h3>Suggested reply</h3>
+          <p className="eyebrow">AI suggested reply</p>
+          <h3>Agent response</h3>
         </div>
-        <Button loading={generating} onClick={onGenerate}>Generate reply</Button>
+        <Button disabled={isResolved} loading={generating} onClick={onGenerate}>{reply.trim() ? "Regenerate reply" : "Generate reply"}</Button>
       </div>
       {error && <p className="form-error">{error}</p>}
       <textarea
@@ -27,11 +31,12 @@ export function AiDraftViewer({ reply, generating, sending, error, onGenerate, o
         placeholder="Write a reply, or generate an AI draft to edit."
         rows={7}
         value={reply}
+        disabled={isResolved}
         onChange={(event) => onReplyChange(event.target.value)}
       />
       <div className="draft-actions">
-        <p className="muted">Review and edit the reply before resolving the ticket.</p>
-        <Button loading={sending} disabled={!reply.trim()} onClick={onSend}>Send & resolve</Button>
+        <p className="muted">{isResolved ? "This ticket is resolved. Use the saved response as the record of the completed case." : "Review and edit this AI suggestion before sending it to the customer."}</p>
+        {!isResolved && <div className="reply-actions"><Button loading={sending} disabled={!reply.trim()} onClick={onSend}>{escalationRequired ? "Send response" : "Send & resolve"}</Button>{canExplicitlyResolve && <Button className="secondary" loading={sending} onClick={onResolve}>Resolve ticket</Button>}</div>}
       </div>
     </section>
   );

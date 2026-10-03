@@ -35,6 +35,7 @@ def send_resolution_email(recipient: str, subject: str, reply: str) -> EmailDeli
             smtp.send_message(message)
     except (OSError, smtplib.SMTPException) as error:
         print(f"Could not send resolution email: {error}")
-        return EmailDeliveryResult("failed", "SMTP delivery failed")
+        detail = str(error).replace("\n", " ").strip()[:240]
+        return EmailDeliveryResult("failed", detail or "SMTP delivery failed")
 
     return EmailDeliveryResult("sent")

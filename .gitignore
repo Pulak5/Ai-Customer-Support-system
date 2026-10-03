@@ -6,7 +6,9 @@ __pycache__/
 
 # C extensions
 *.so
-
+# Local application data. These are created again on each developer's machine.
+*.db
+backend/app/chroma_db/
 # Distribution / packaging
 .Python
 build/
@@ -150,6 +152,8 @@ activemq-data/
 
 # Environments
 .env
+.env.*
+!.env.example
 .envrc
 .venv
 env/

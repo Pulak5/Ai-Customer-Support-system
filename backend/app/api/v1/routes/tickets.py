@@ -35,10 +35,12 @@ def get_draft_reply(ticket_id: int, db: Session = Depends(get_db)):
         raise HTTPException(status_code=404, detail="Ticket not found")
         
     try:
-        draft = generate_draft_reply(subject=ticket.subject, description=ticket.description)
+        triage = ticket_service.triage_from_ticket(ticket)
+        context = "\n\n".join(source.get("excerpt", "") for source in (ticket.knowledge_sources or []))
+        draft = generate_draft_reply(ticket.subject, ticket.description, triage, context)
     except GeminiUnavailableError as error:
         raise HTTPException(status_code=503, detail=str(error)) from error
-    return {"draft_reply": draft}
+    return {"draft_reply": draft, "knowledge_sources": ticket.knowledge_sources or []}
 
 @router.post("/{ticket_id}/reply", response_model=TicketResponse)
 def send_agent_reply(
@@ -46,10 +48,38 @@ def send_agent_reply(
     reply: TicketReplyCreate,
     db: Session = Depends(get_db),
 ):
-    """Save an agent's response and mark the ticket as resolved."""
+    """Save a reviewed reply and resolve or escalate the ticket."""
     if not reply.message.strip():
         raise HTTPException(status_code=422, detail="Reply message cannot be empty")
-    ticket = ticket_service.resolve_ticket(db=db, ticket_id=ticket_id, reply_in=reply)
+    try:
+        ticket = ticket_service.resolve_ticket(db=db, ticket_id=ticket_id, reply_in=reply)
+    except ValueError as error:
+        raise HTTPException(status_code=409, detail=str(error)) from error
+    if not ticket:
+        raise HTTPException(status_code=404, detail="Ticket not found")
+    return ticket
+
+@router.post("/{ticket_id}/resolve", response_model=TicketResponse)
+def explicitly_resolve_escalated_ticket(ticket_id: int, db: Session = Depends(get_db)):
+    """Explicitly resolve an escalated ticket after the human agent has reviewed it."""
+    try:
+        ticket = ticket_service.explicitly_resolve_ticket(db=db, ticket_id=ticket_id)
+    except ValueError as error:
+        raise HTTPException(status_code=409, detail=str(error)) from error
+    if not ticket:
+        raise HTTPException(status_code=404, detail="Ticket not found")
+    return ticket
+
+@router.post("/{ticket_id}/retry-email", response_model=TicketResponse)
+def retry_email_delivery(ticket_id: int, db: Session = Depends(get_db)):
+    ticket = ticket_service.retry_resolution_email(db=db, ticket_id=ticket_id)
+    if not ticket:
+        raise HTTPException(status_code=404, detail="Ticket or saved reply not found")
+    return ticket
+
+@router.post("/{ticket_id}/reanalyze", response_model=TicketResponse)
+def retry_ai_analysis(ticket_id: int, db: Session = Depends(get_db)):
+    ticket = ticket_service.reanalyze_ticket(db=db, ticket_id=ticket_id)
     if not ticket:
         raise HTTPException(status_code=404, detail="Ticket not found")
     return ticket

@@ -31,6 +31,11 @@ def migrate_sqlite_schema():
         "assigned_group": "VARCHAR",
         "agent_reply": "TEXT",
         "email_delivery_status": "VARCHAR",
+        "email_delivery_detail": "TEXT",
+        "requires_escalation": "BOOLEAN NOT NULL DEFAULT 0",
+        "escalation_reason": "TEXT",
+        "ai_summary": "TEXT",
+        "knowledge_sources": "JSON",
     }
     for column_name, column_type in missing_columns.items():
         if column_name in ticket_columns:

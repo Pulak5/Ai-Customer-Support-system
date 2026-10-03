@@ -19,8 +19,8 @@ export function TicketList({ tickets, selectedId, onSelect }: TicketListProps) {
           key={ticket.id}
           onClick={() => onSelect(ticket)}
         >
-          <span className="ticket-row-title">{ticket.subject}</span>
-          <span className="ticket-row-meta">#{ticket.id} · {ticket.priority ?? "unassigned"}</span>
+          <span className="ticket-row-top"><span className="ticket-row-title">{ticket.subject}</span><span className={`mini-badge ${ticket.status}`}>{ticket.status.replace("_", " ")}</span></span>
+          <span className="ticket-row-meta">#{ticket.id} · {ticket.priority ?? "unassigned"} · {ticket.assigned_group ?? "General Support"}</span>
         </button>
       ))}
     </div>

@@ -18,7 +18,7 @@ def get_vector_store() -> Chroma:
     
     vector_store = Chroma(
         # Keep Gemini vectors separate from any existing OpenAI-embedded collection.
-        collection_name="knowledge_base_gemini",
+        collection_name="knowledge_base_gemini_v2",
         embedding_function=embeddings,
         persist_directory=CHROMA_DB_DIR
     )
@@ -28,13 +28,13 @@ def similarity_search(query: str, k: int = 3) -> List[Dict[str, Any]]:
     """Searches the vector DB for the top k most relevant documents."""
     try:
         vector_store = get_vector_store()
-        docs = vector_store.similarity_search(query, k=k)
-        
+        matches = vector_store.similarity_search_with_relevance_scores(query, k=k)
         results = []
-        for doc in docs:
+        for doc, score in matches:
             results.append({
                 "content": doc.page_content,
-                "metadata": doc.metadata
+                "metadata": doc.metadata,
+                "relevance": round(max(0.0, min(float(score), 1.0)), 2),
             })
         return results
     except Exception as e:

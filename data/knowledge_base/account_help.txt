@@ -1,0 +1,5 @@
+Account Help
+
+Customers who cannot access their account should first confirm the email address associated with the account and use the password-reset process. Account ownership, identity changes, and account recovery requests require Account Team review.
+
+Support staff must never request a password or one-time verification code.

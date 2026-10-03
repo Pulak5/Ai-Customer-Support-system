@@ -1,0 +1,5 @@
+Subscription Policy
+
+Customers can view, change, or cancel their subscription from account settings. Plan changes take effect at the next billing cycle unless the account page states otherwise. Refunds and charge disputes must be reviewed by Billing Team.
+
+Do not confirm a cancellation or plan change unless it is visible in the account record.

@@ -4,6 +4,7 @@ import Link from "next/link";
 import { FormEvent, useState } from "react";
 import { Button } from "@/components/ui/Button";
 import { api } from "@/lib/api";
+import { formatTicketDate } from "@/lib/format";
 import type { Ticket } from "@/types";
 
 const initialForm = { customer_email: "", subject: "", description: "" };
@@ -70,7 +71,24 @@ export default function CustomerDashboardPage() {
             <Button type="submit" loading={tracking}>Check status</Button>
           </form>
           {error && <p className="form-error" role="alert">{error}</p>}
-          {ticket && <div className="result-card"><p className="eyebrow">Ticket #{ticket.id}</p><h3>{ticket.subject}</h3><p className="status-line">Status: <strong>{ticket.status.replace("_", " ")}</strong></p><p className="muted">Assigned to {ticket.assigned_group ?? "General Support"}</p>{ticket.agent_reply && <><p className="eyebrow">Support reply</p><p className="draft-copy">{ticket.agent_reply}</p></>}{ticket.email_delivery_status === "sent" && <p className="muted">A copy of this reply was sent by email.</p>}</div>}
+          {ticket && <div className="result-card">
+            <p className="eyebrow">Ticket #{ticket.id}</p>
+            <h3>Subject: {ticket.subject}</h3>
+            <p className="status-line">Status: <strong>{ticket.status.replace("_", " ")}</strong></p>
+            <p className="muted">Assigned to: {ticket.assigned_group ?? "General Support"}</p>
+            <p className="muted">Created: {formatTicketDate(ticket.created_at)}</p>
+            <p className="muted">Last updated: {formatTicketDate(ticket.updated_at)}</p>
+            <div className="next-step">
+              <p className="eyebrow">Next step</p>
+              <p>{ticket.status === "resolved"
+                ? "Your ticket has been resolved. Please review the support response below."
+                : ticket.requires_escalation
+                  ? "A support specialist will review your request and follow up with you."
+                  : "Your request is assigned to the support team for review."}</p>
+            </div>
+            {ticket.agent_reply && <><p className="eyebrow">Support reply</p><p className="draft-copy">{ticket.agent_reply}</p></>}
+            {ticket.email_delivery_status === "sent" && <p className="muted">A copy of this reply was sent by email.</p>}
+          </div>}
         </section>
       </div>
     </main>

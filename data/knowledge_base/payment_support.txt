@@ -1,0 +1,5 @@
+Payment Support and Duplicate Charges
+
+If a customer reports a duplicate charge, apologize, ask for the charge dates and transaction references, and explain that Billing Team will review the payment history. Account-specific changes and payment disputes require human review.
+
+Never ask a customer to share full card numbers, CVV values, passwords, or one-time passcodes.

@@ -40,19 +40,35 @@ def _invoke_with_fallback(invoke, temperature: float):
 
 # 1. Define exactly what we want the AI to extract
 class TicketTriageResult(BaseModel):
-    category: str = Field(description="The category: billing, technical, sales, or general")
+    category: str = Field(description="One of billing, account, technical, shipping, subscription, security_fraud, or general")
     priority: str = Field(description="The priority: low, medium, high, or urgent")
-    sentiment: str = Field(description="Customer sentiment: happy, neutral, frustrated, or angry")
-    confidence: float = Field(description="Confidence score between 0.0 and 1.0 that the RAG context fully answers the question", default=0.0)
+    sentiment: str = Field(description="Customer sentiment: positive, neutral, negative, or angry")
+    assigned_group: str = Field(description="The team: Billing Team, Account Team, Technical Support, Shipping Team, Subscription Team, Security Team, or General Support")
+    requires_escalation: bool = Field(description="True when a human agent must review or act on the ticket")
+    escalation_reason: str = Field(description="Brief reason for escalation, or an empty string if none is needed")
+    confidence: float = Field(description="Confidence score between 0.0 and 1.0 that the ticket can be answered from company knowledge", default=0.0)
+
+
+def fallback_triage(subject: str, description: str) -> TicketTriageResult:
+    text = f"{subject} {description}".lower()
+    if any(term in text for term in ("fraud", "unauthorized", "scam", "stolen", "kyc", "transaction")):
+        return TicketTriageResult(category="security_fraud", priority="urgent", sentiment="angry", assigned_group="Security Team", requires_escalation=True, escalation_reason="Potential unauthorized financial or security activity", confidence=0.2)
+    if any(term in text for term in ("charged", "payment", "refund", "billing", "invoice", "deducted")):
+        return TicketTriageResult(category="billing", priority="high", sentiment="negative", assigned_group="Billing Team", requires_escalation=True, escalation_reason="Payment or billing review may be required", confidence=0.35)
+    if any(term in text for term in ("password", "login", "account", "sign in")):
+        return TicketTriageResult(category="account", priority="medium", sentiment="neutral", assigned_group="Account Team", requires_escalation=False, escalation_reason="", confidence=0.6)
+    if any(term in text for term in ("shipping", "delivery", "order", "arrive")):
+        return TicketTriageResult(category="shipping", priority="medium", sentiment="neutral", assigned_group="Shipping Team", requires_escalation=False, escalation_reason="", confidence=0.6)
+    return TicketTriageResult(category="general", priority="medium", sentiment="neutral", assigned_group="General Support", requires_escalation=False, escalation_reason="", confidence=0.3)
 
 def triage_ticket_text(subject: str, description: str) -> TicketTriageResult:
     # Keep the app usable until a Gemini API key has been configured.
     if not settings.GOOGLE_API_KEY or settings.GOOGLE_API_KEY == "your-api-key-here":
         print("No Google API key found. Skipping AI Triage.")
-        return TicketTriageResult(category="general", priority="medium", sentiment="neutral")
+        return fallback_triage(subject, description)
 
     prompt = ChatPromptTemplate.from_messages([
-        ("system", "You are an expert customer support triage system. Analyze the ticket and extract the category, priority, and sentiment."),
+        ("system", "You are an expert customer support triage system. Return a structured classification. Escalation is required for fraud, account-specific actions, payment disputes, credible security concerns, very angry customers, complex technical incidents, or when company knowledge is unlikely to be enough. Do not claim a ticket is resolved."),
         ("human", "Subject: {subject}\n\nDescription: {description}")
     ])
 
@@ -68,23 +84,23 @@ def triage_ticket_text(subject: str, description: str) -> TicketTriageResult:
 
     return TicketTriageResult.model_validate(result)
 
-def generate_draft_reply(subject: str, description: str) -> str:
+def generate_draft_reply(subject: str, description: str, triage: TicketTriageResult, context: str) -> str:
     """Generates a draft reply using RAG context."""
-    from app.ai.rag.vector_db import similarity_search
     from app.ai.prompts.draft_reply_prompt import DRAFT_REPLY_PROMPT
     from langchain_core.output_parsers import StrOutputParser
 
     if not settings.GOOGLE_API_KEY or settings.GOOGLE_API_KEY == "your-api-key-here":
         return "This is a fallback draft reply since no Google API key was found."
 
-    # 1. Get relevant context from RAG
-    relevant_docs = similarity_search(description, k=2)
-    context_text = "\n\n".join([doc["content"] for doc in relevant_docs])
-
     payload = {
-        "context": context_text,
+        "context": context or "No relevant company knowledge was found.",
         "subject": subject,
         "description": description,
+        "category": triage.category,
+        "priority": triage.priority,
+        "sentiment": triage.sentiment,
+        "requires_escalation": triage.requires_escalation,
+        "escalation_reason": triage.escalation_reason or "No escalation is required.",
     }
     result = _invoke_with_fallback(
         lambda llm: (DRAFT_REPLY_PROMPT | llm | StrOutputParser()).invoke(payload),
@@ -109,3 +125,16 @@ def generate_thread_summary(thread_history: str) -> str:
         lambda llm: (prompt | llm | StrOutputParser()).invoke({"thread": thread_history}),
         temperature=0.3,
     )
+
+
+def build_summary(description: str, triage: TicketTriageResult) -> str:
+    """Create a concise, dependable agent-facing summary without inventing facts."""
+    issue = " ".join(description.split())
+    if len(issue) > 280:
+        issue = f"{issue[:277].rstrip()}…"
+    action = (
+        f"Escalate to {triage.assigned_group}: {triage.escalation_reason}"
+        if triage.requires_escalation
+        else f"Recommended action: review and respond using {triage.assigned_group} guidance."
+    )
+    return f"Customer reports: {issue}\n\n{action}"
