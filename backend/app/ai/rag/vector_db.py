@@ -24,6 +24,13 @@ def get_vector_store() -> Chroma:
     )
     return vector_store
 
+
+def reset_vector_store() -> Chroma:
+    """Replace the local collection so re-indexing does not duplicate documents."""
+    vector_store = get_vector_store()
+    vector_store.delete_collection()
+    return get_vector_store()
+
 def similarity_search(query: str, k: int = 3) -> List[Dict[str, Any]]:
     """Searches the vector DB for the top k most relevant documents."""
     try:

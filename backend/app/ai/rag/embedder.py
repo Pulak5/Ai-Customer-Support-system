@@ -7,9 +7,14 @@ if __name__ == "__main__":
 
 from langchain_core.documents import Document
 
-from app.ai.rag.vector_db import get_vector_store
+from app.core.config import settings
+from app.ai.rag.vector_db import reset_vector_store
 
-KNOWLEDGE_BASE_DIR = Path(__file__).resolve().parents[4] / "data" / "knowledge_base"
+KNOWLEDGE_BASE_DIR = (
+    Path(settings.KNOWLEDGE_BASE_DIR)
+    if settings.KNOWLEDGE_BASE_DIR
+    else Path(__file__).resolve().parents[4] / "data" / "knowledge_base"
+)
 
 
 def title_for(path: Path) -> str:
@@ -48,7 +53,7 @@ def ingest_knowledge_base():
     documents = load_documents()
     if not documents:
         raise RuntimeError(f"No knowledge-base files found in {KNOWLEDGE_BASE_DIR}")
-    vector_store = get_vector_store()
+    vector_store = reset_vector_store()
     vector_store.add_documents(documents)
     print(f"Successfully ingested {len(documents)} knowledge-base chunks into the Vector DB.")
 

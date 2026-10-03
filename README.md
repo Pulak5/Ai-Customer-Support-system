@@ -49,6 +49,75 @@ git clone https://github.com/Pulak5/Ai-Customer-Support-system.git
 cd Ai-Customer-Support-system
 ```
 
+## Run with Docker (recommended for a full local demo)
+
+Docker runs the frontend and backend in separate containers, keeps ticket data and the RAG index in Docker volumes, and starts both services with one command.
+
+### 1. Install Docker Desktop
+
+Install and start [Docker Desktop](https://www.docker.com/products/docker-desktop/). Confirm it is running before continuing.
+
+### 2. Configure Gemini and optional email
+
+Create the private backend environment file from the project root:
+
+**Windows PowerShell**
+
+```powershell
+Copy-Item .env.example backend/.env
+```
+
+Add your `GOOGLE_API_KEY` to `backend/.env`. Configure the SMTP values in the same file only if you want email delivery.
+
+### 3. Build and start the application
+
+```bash
+docker compose up --build
+```
+
+On the first start, Docker automatically creates the database and builds the RAG index from the policy documents included in `data/knowledge_base`.
+
+Open:
+
+- Customer portal: `http://localhost:3000`
+- Agent workspace: `http://localhost:3000/workspace`
+- API documentation: `http://localhost:8000/docs`
+
+To run it in the background, use `docker compose up --build -d`. Stop the containers with `docker compose down`. Your tickets and RAG index remain in Docker volumes after stopping.
+
+### Rebuild the RAG index after editing policy documents
+
+```bash
+docker compose exec backend rm /app/app/chroma_db/.initialized
+docker compose restart backend
+```
+
+The index is rebuilt on the next backend start. Re-indexing replaces the previous collection, so duplicate documents are not created.
+
+### Deploying a Docker image
+
+Docker is the right packaging choice for this application. The project produces two images: one for the frontend and one for the backend.
+
+To publish both images to Docker Hub, sign in first and set your Docker Hub username:
+
+**Windows PowerShell**
+
+```powershell
+docker login
+$env:DOCKERHUB_USERNAME = "your-docker-hub-username"
+docker compose build
+docker compose push
+```
+
+The images will be published as:
+
+```text
+your-docker-hub-username/ai-customer-support-backend:latest
+your-docker-hub-username/ai-customer-support-frontend:latest
+```
+
+For public deployment, deploy the images to a service such as Render, Railway, Google Cloud Run, Fly.io, or a VPS. Set `NEXT_PUBLIC_API_URL` to the public backend URL while building the frontend, and set `CORS_ORIGINS` in the backend environment file to the public frontend URL.
+
 ## Configure and run the backend
 
 ### 1. Create a Python virtual environment
@@ -111,7 +180,7 @@ The project includes sample policy documents in `data/knowledge_base`. With the 
 python -m app.ai.rag.embedder
 ```
 
-This creates a local Chroma index in `backend/app/chroma_db`. The index is generated data and is ignored by Git, so every new machine must run this command after setting `GOOGLE_API_KEY`.
+This creates a local Chroma index in `backend/app/chroma_db`. The index is generated data and is ignored by Git, so every new machine must run this command after setting `GOOGLE_API_KEY`. Run it again after changing the policy documents; it replaces the previous index.
 
 ### 4. Start the API
 
@@ -179,6 +248,8 @@ If delivery fails, the response remains saved, the customer can still see it in 
 | Variable | Required | Purpose |
 | --- | --- | --- |
 | `DATABASE_URL` | No | SQLite connection string. Defaults to `sqlite:///./tickets.db`. |
+| `KNOWLEDGE_BASE_DIR` | No | Policy-document folder. Docker sets this automatically. |
+| `CORS_ORIGINS` | No | Comma-separated frontend addresses permitted to call the API. |
 | `GOOGLE_API_KEY` | Yes for AI and RAG | Gemini API key. |
 | `GEMINI_CHAT_MODEL` | No | Main Gemini model used for triage and replies. |
 | `GEMINI_FALLBACK_CHAT_MODEL` | No | Fallback model when the main Gemini model is temporarily busy. |
@@ -228,4 +299,3 @@ npm run build
 | Frontend cannot contact the API | Start the backend first and confirm the frontend API URL is `http://127.0.0.1:8000/api/v1`. |
 | Email delivery fails | Check the SMTP values, provider security settings, and credentials. The saved reply remains available and can be retried. |
 | Port is already in use | Stop the process using port 3000 or 8000, or configure a different port and update `NEXT_PUBLIC_API_URL`. |
-

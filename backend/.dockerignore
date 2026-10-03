@@ -1,0 +1,8 @@
+venv/
+.venv/
+__pycache__/
+*.py[cod]
+.env
+tickets.db
+app/chroma_db/
+.pytest_cache/

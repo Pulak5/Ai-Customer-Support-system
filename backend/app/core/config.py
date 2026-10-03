@@ -5,9 +5,11 @@ class Settings(BaseSettings):
     PROJECT_NAME: str = "AI Ticket System"
     VERSION: str = "0.1.0"
     API_V1_STR: str = "/api/v1"
+    CORS_ORIGINS: str = "http://localhost:3000,http://127.0.0.1:3000"
     
     # Database Settings (Using a local SQLite DB for now to get started quickly)
     DATABASE_URL: str = "sqlite:///./tickets.db"
+    KNOWLEDGE_BASE_DIR: str = ""
     
     # Gemini Developer API settings
     GOOGLE_API_KEY: str = ""
